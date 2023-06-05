@@ -9,10 +9,12 @@ from django.db.models import Count, QuerySet
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
 from django.utils import translation
+from django.http import HttpResponse
+from typing import List
 
 from evap.evaluation.auth import internal_required
 from evap.evaluation.models import Course, CourseType, Degree, Evaluation, Semester, UserProfile
-from evap.evaluation.tools import AttachmentResponse, unordered_groupby
+from evap.evaluation.tools import AttachmentResponse, unordered_groupby, AuthenticatedHttpRequest
 from evap.results.exporters import TextAnswerExporter
 from evap.results.tools import (
     STATES_WITH_RESULT_TEMPLATE_CACHING,
@@ -161,7 +163,7 @@ def index(request):
     return render(request, "results_index.html", template_data)
 
 
-def evaluation_detail(request, semester_id, evaluation_id):
+def evaluation_detail(request: AuthenticatedHttpRequest, semester_id: int, evaluation_id: int) -> HttpResponse:
     # pylint: disable=too-many-locals
     semester = get_object_or_404(Semester, id=semester_id)
     evaluation = get_object_or_404(semester.evaluations, id=evaluation_id, course__semester=semester)
@@ -310,7 +312,7 @@ def split_evaluation_result_into_top_bottom_and_contributor(evaluation_result, v
     return top_results, bottom_results, contributor_results
 
 
-def get_evaluations_of_course(course, request):
+def get_evaluations_of_course(course: Course, request: AuthenticatedHttpRequest) -> List[Evaluation] :
     course_evaluations = []
 
     if course.evaluations.count() > 1:

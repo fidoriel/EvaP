@@ -1,7 +1,7 @@
 import datetime
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type, TypeVar, TYPE_CHECKING
 from urllib.parse import quote
 
 import xlwt
@@ -11,6 +11,10 @@ from django.db.models import Model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import get_language
+from django.http import HttpRequest
+
+if TYPE_CHECKING:
+    from evap.evaluation.models import UserProfile
 
 M = TypeVar("M", bound=Model)
 T = TypeVar("T")
@@ -245,3 +249,6 @@ class ExcelExporter(ABC):
         """Convenience method to avoid some boilerplate."""
         self.export_impl(*args, **kwargs)
         self.workbook.save(response)
+
+class AuthenticatedHttpRequest(HttpRequest):
+    user: "UserProfile"
