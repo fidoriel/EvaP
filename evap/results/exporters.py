@@ -157,7 +157,7 @@ class ResultsExporter(ExcelExporter):
             if evaluation.course_evaluations_count > 1:  # type: ignore[attr-defined]
                 course_results_exist = True
                 weight_sum = sum(evaluation.weight for evaluation in evaluation.course.evaluations.all())
-                evaluation.weight_percentage = int((evaluation.weight / weight_sum) * 100)  # type: ignore
+                evaluation.weight_percentage = int((evaluation.weight / weight_sum) * 100)  # type: ignore[attr-defined]
                 evaluation.course.avg_grade = distribution_to_grade(  # type: ignore[attr-defined]
                     calculate_average_course_distribution(evaluation.course)
                 )
@@ -241,8 +241,8 @@ class ResultsExporter(ExcelExporter):
 
             self.write_cell(_("Evaluation weight"), "bold")
             weight_percentages: Generator[str | None, None, None] = (
-                f"{e.weight_percentage}%" if gt1 else None
-                for e, gt1 in zip(evaluations, count_gt_1)  # type: ignore[attr-defined]
+                f"{e.weight_percentage}%" if gt1 else None  # type: ignore[attr-defined]
+                for e, gt1 in zip(evaluations, count_gt_1)
             )
             self.write_row(weight_percentages, lambda s: "evaluation_weight" if s is not None else "default")
 
