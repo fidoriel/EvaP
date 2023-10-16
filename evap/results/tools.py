@@ -174,7 +174,7 @@ def cache_results(evaluation, *, refetch_related_objects=True):
     caches["results"].set(cache_key, _get_results_impl(evaluation, refetch_related_objects=refetch_related_objects))
 
 
-def get_results(evaluation):
+def get_results(evaluation: Evaluation) -> EvaluationResult:
     assert evaluation.state in STATES_WITH_RESULTS_CACHING | {Evaluation.State.IN_EVALUATION}
 
     if evaluation.state == Evaluation.State.IN_EVALUATION:
@@ -195,7 +195,7 @@ GET_RESULTS_PREFETCH_LOOKUPS = [
 ]
 
 
-def _get_results_impl(evaluation: Evaluation, *, refetch_related_objects: bool = True):
+def _get_results_impl(evaluation: Evaluation, *, refetch_related_objects: bool = True) -> EvaluationResult:
     if refetch_related_objects:
         discard_cached_related_objects(evaluation)
 
