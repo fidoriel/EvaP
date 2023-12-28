@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
   end
 
   # port forwarding
-  config.vm.network :forwarded_port, guest: 8000, host: 8000 # django server
+  config.vm.network :forwarded_port, guest: 8000, host: 8002 # django server
   config.vm.network :forwarded_port, guest: 80, host: 8001 # apache
   config.vm.network :forwarded_port, guest: 6379, host: 6379 # redis. helpful when developing on windows, for which redis is not available
 

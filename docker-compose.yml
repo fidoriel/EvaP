@@ -1,0 +1,37 @@
+version: "3.9"
+name: evap
+
+services:
+  postgres:
+    container_name: postres
+    image: postgres:15-alpine
+    volumes:
+      - evappg:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=evap
+      - POSTGRES_USER=evap
+      - POSTGRES_DB=evap
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+
+  evap:
+    container_name: evap
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - ./:/app
+      - /app/.venv
+      - /app/node_modules
+      - /app/mypy_cache
+    command: sleep infinity
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  evappg:
