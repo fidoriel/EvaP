@@ -1,3 +1,4 @@
+from numbers import Number
 import warnings
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable, Sequence
@@ -25,6 +26,10 @@ from evap.results.tools import (
 T = TypeVar("T", bound=Model)
 QuerySetOrSequence = QuerySet[T] | Sequence[T]
 AnnotatedEvaluation = Any
+
+def calc_average_without_none(values: Iterable[Number | None]) -> float:
+    filtered_values = [x for x in values if x is not None]
+    return sum(filtered_values) / len(filtered_values)
 
 
 class ResultsExporter(ExcelExporter):
@@ -197,6 +202,8 @@ class ResultsExporter(ExcelExporter):
             )
         else:
             self.write_cell(export_name, "headline")
+        
+        self.write_cell(_("Average for this question"), "evaluation")
 
         for evaluation, __ in evaluations_with_results:
             title = evaluation.full_name
@@ -208,17 +215,19 @@ class ResultsExporter(ExcelExporter):
 
         self.next_row()
         self.write_cell(_("Programs"), "bold")
+        self.write_cell("-", "border_left_right")
         for evaluation, __ in evaluations_with_results:
             self.write_cell("\n".join([d.name for d in evaluation.course.programs.all()]), "program")
 
         self.next_row()
         self.write_cell(_("Course Type"), "bold")
+        self.write_cell("-", "border_left_right")
         for evaluation, __ in evaluations_with_results:
             self.write_cell(evaluation.course.type.name, "border_left_right")
 
         self.next_row()
         # One more cell is needed for the question column
-        self.write_empty_row_with_styles(["default"] + ["border_left_right"] * len(evaluations_with_results))
+        self.write_empty_row_with_styles(["default", "border_left_right"] + ["border_left_right"] * (len(evaluations_with_results)))
 
     def write_overall_results(
         self,
@@ -228,14 +237,17 @@ class ResultsExporter(ExcelExporter):
         annotated_evaluations = [e for e, __ in evaluations_with_results]
 
         self.write_cell(_("Overall Average Grade"), "bold")
+        self.write_cell("-", "degree")
         averages = (distribution_to_grade(calculate_average_distribution(e)) for e in annotated_evaluations)
         self.write_row(averages, lambda avg: self.grade_to_style(avg) if avg else "border_left_right")
 
         self.write_cell(_("Total voters/Total participants"), "bold")
+        self.write_cell("-", "degree")
         voter_ratios = (f"{e.num_voters}/{e.num_participants}" for e in annotated_evaluations)
         self.write_row(voter_ratios, style="total_voters")
 
         self.write_cell(_("Evaluation rate"), "bold")
+        self.write_cell("-", "evaluation_rate")
         # round down like in progress bar
         participant_percentages = (
             f"{int((e.num_voters / e.num_participants) * 100) if e.num_participants > 0 else 0}%"
@@ -249,10 +261,11 @@ class ResultsExporter(ExcelExporter):
 
             # Borders only if there is a course grade below. Offset by one column
             self.write_empty_row_with_styles(
-                ["default"] + ["border_left_right" if gt1 else "default" for gt1 in count_gt_1]
+                ["default", "border_left_right"] + ["border_left_right" if gt1 else "default" for gt1 in count_gt_1]
             )
 
             self.write_cell(_("Evaluation weight"), "bold")
+            self.write_cell("-")
             weight_percentages = (
                 f"{e.weight_percentage}%" if gt1 else None
                 for e, gt1 in zip(annotated_evaluations, count_gt_1, strict=True)
@@ -260,6 +273,7 @@ class ResultsExporter(ExcelExporter):
             self.write_row(weight_percentages, lambda s: "evaluation_weight" if s is not None else "default")
 
             self.write_cell(_("Course Grade"), "bold")
+            self.write_cell("-")
             for evaluation, gt1 in zip(annotated_evaluations, count_gt_1, strict=True):
                 if not gt1:
                     self.write_cell()
@@ -271,7 +285,7 @@ class ResultsExporter(ExcelExporter):
             self.next_row()
 
             # Same reasoning as above.
-            self.write_empty_row_with_styles(["default"] + ["border_top" if gt1 else "default" for gt1 in count_gt_1])
+            self.write_empty_row_with_styles(["default", "default"] + ["border_top" if gt1 else "default" for gt1 in count_gt_1])
 
     def write_questionnaire(
         self,
@@ -285,13 +299,17 @@ class ResultsExporter(ExcelExporter):
             self.write_cell(questionnaire.public_name, "bold")
 
         # first cell of row is printed above
-        self.write_empty_row_with_styles(["border_left_right"] * len(evaluations_with_results))
+        self.write_empty_row_with_styles( ["default"] + ["border_left_right"] * (len(evaluations_with_results)+1))
 
         for question in self.filter_text_and_heading_questions(questionnaire.questions.all()):
             self.write_cell(question.text, "italic" if question.is_heading_question else "default")
 
-            for __, results in evaluations_with_results:
+            self.write_cell("placeholder",style="border_left_right")
+
+            for i, (__, results) in enumerate(evaluations_with_results):
                 if questionnaire.id not in results or question.is_heading_question:
+                    if i == 0:
+                        self.write_cell(style="border_left_right")
                     self.write_cell(style="border_left_right")
                     continue
 
@@ -309,6 +327,8 @@ class ResultsExporter(ExcelExporter):
                         approval_count += grade_result.approval_count
 
                 if not values:
+                    if i == 0:
+                        self.write_cell(style="border_left_right")
                     self.write_cell(style="border_left_right")
                     continue
 
@@ -320,7 +340,7 @@ class ResultsExporter(ExcelExporter):
                     self.write_cell(avg, self.grade_to_style(avg))
             self.next_row()
 
-        self.write_empty_row_with_styles(["default"] + ["border_left_right"] * len(evaluations_with_results))
+        self.write_empty_row_with_styles(["default", "default"] + ["border_left_right"] * (len(evaluations_with_results)+1))
 
     # pylint: disable=arguments-differ
     def export_impl(
