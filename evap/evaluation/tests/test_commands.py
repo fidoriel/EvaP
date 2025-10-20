@@ -73,7 +73,6 @@ class TestAnonymizeCommand(TestCase):
             semester=semester1,
             name_de="Eine private Veranstaltung",
             name_en="A private course",
-            is_private=True,
         )
         course2 = baker.make(
             Course,

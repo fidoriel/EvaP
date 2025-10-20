@@ -60,7 +60,6 @@ class GlobalRewards:
             .exclude(is_rewarded=False)
             .exclude(id__in=settings.GLOBAL_EVALUATION_PROGRESS_EXCLUDED_EVALUATION_IDS)
             .exclude(course__type__id__in=settings.GLOBAL_EVALUATION_PROGRESS_EXCLUDED_COURSE_TYPE_IDS)
-            .exclude(course__is_private=True)
         )
 
         vote_count, participation_count = (

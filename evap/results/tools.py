@@ -486,15 +486,10 @@ def can_textanswer_be_seen_by(  # noqa: PLR0911
         return False
 
     if view == "export":
-        if textanswer.is_private:
-            return False
         if not textanswer.contribution.is_general and contributor != user:
             return False
     elif user.is_reviewer:
         return True
-
-    if textanswer.is_private:
-        return contributor == user
 
     # NOTE: when changing this behavior, make sure all changes are also reflected in results.tools.textanswers_visible_to
     # and in results.tests.test_tools.TestTextAnswerVisibilityInfo

@@ -322,9 +322,6 @@ class Course(LoggedModel):
     # e.g. Bachelor, Master
     programs = models.ManyToManyField(Program, verbose_name=_("programs"), related_name="courses")
 
-    # defines whether results can only be seen by contributors and participants
-    is_private = models.BooleanField(verbose_name=_("is private"), default=False)
-
     # persons responsible for the course; their names will be shown next to course, they can edit the course and see general text answers
     responsibles = models.ManyToManyField(
         settings.AUTH_USER_MODEL, verbose_name=_("responsibles"), related_name="courses_responsible_for"
@@ -654,11 +651,6 @@ class Evaluation(LoggedModel):
             return False
         if user.is_reviewer and not self.course.semester.results_are_archived:
             return True
-        if self.course.is_private or user.is_external:
-            return (
-                self.is_user_responsible_or_contributor_or_delegate(user)
-                or self.participants.filter(pk=user.pk).exists()
-            )
         return True
 
     def can_results_page_be_seen_by(self, user):
@@ -1528,7 +1520,6 @@ class TextAnswer(Answer):
         """
 
         PUBLIC = "PU", _("public")
-        PRIVATE = "PR", _("private")  # This answer should only be displayed to the contributor the question was about
         DELETED = "DE", _("deleted")
 
         UNDECIDED = "UN", _("undecided")
@@ -1558,22 +1549,14 @@ class TextAnswer(Answer):
         return self.review_decision == self.ReviewDecision.DELETED
 
     @property
-    def will_be_private(self):
-        return self.review_decision == self.ReviewDecision.PRIVATE
-
-    @property
     def will_be_public(self):
         return self.review_decision == self.ReviewDecision.PUBLIC
 
     # Once evaluation results are published, the review decision is executed
-    # and thus, an answer _is_ private or _is_ public from that point on.
+    # and thus, an answer _is_ public from that point on.
     @property
     def is_public(self):
         return self.will_be_public
-
-    @property
-    def is_private(self):
-        return self.will_be_private
 
     @property
     def is_reviewed(self):

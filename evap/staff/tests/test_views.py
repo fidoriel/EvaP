@@ -1785,7 +1785,6 @@ class TestCourseCreateView(WebTestStaffMode):
         form["semester"] = self.semester.pk
         form["type"] = self.course_type.pk
         form["programs"] = [self.program.pk]
-        form["is_private"] = False
         form["responsibles"] = [self.responsible.pk]
         form["name_en"] = name_en
         form["name_de"] = name_de
